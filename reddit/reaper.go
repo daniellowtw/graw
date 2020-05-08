@@ -28,6 +28,23 @@ type reaperConfig struct {
 	rate       time.Duration
 }
 
+// Dreaper is an exposed reaper with only GET functionality.
+type Dreaper interface {
+	Reap(path string, values map[string]string) (Harvest, error)
+}
+
+// A wrapper around reaper in case the implementation changes upstream.
+type dreaperImpl struct {
+	reaper *reaperImpl
+}
+
+// Rely on compiler for type check.
+var _ Dreaper = (*dreaperImpl)(nil)
+
+func (d *dreaperImpl) Reap(path string, values map[string]string) (Harvest, error) {
+	return d.reaper.reap(path, values)
+}
+
 // reaper is a high level api for Reddit HTTP requests.
 type reaper interface {
 	// reap executes a GET request to Reddit and returns the elements from

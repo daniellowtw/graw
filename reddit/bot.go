@@ -36,6 +36,30 @@ type bot struct {
 	Scanner
 }
 
+var _ Bot = (*bot)(nil)
+
+// NewReaperFromConfig creates a reaper from the agent file
+func NewReaperFromConfig(filename string, rate time.Duration) (Dreaper, error) {
+	agent, app, err := load(filename)
+	if err != nil {
+		return nil, err
+	}
+	cli, err := newClient(clientConfig{agent: agent, app: app})
+	if err != nil {
+		return nil, err
+	}
+	r := newReaper(
+		reaperConfig{
+			client:   cli,
+			parser:   newParser(),
+			hostname: "oauth.reddit.com",
+			tls:      true,
+			rate:     maxOf(rate, time.Second),
+		},
+	)
+	return &dreaperImpl{reaper: r.(*reaperImpl)}, nil
+}
+
 // NewBot returns a logged in handle to the Reddit API.
 func NewBot(c BotConfig) (Bot, error) {
 	cli, err := newClient(clientConfig{agent: c.Agent, app: c.App, client: c.Client})
